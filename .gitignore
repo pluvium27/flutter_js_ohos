@@ -123,3 +123,11 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 .cxx/
+# OHOS / HarmonyOS build outputs
+ohos/.hvigor/
+ohos/oh_modules/
+ohos/entry/build/
+ohos/entry/.preview/
+ohos/build/
+**/.hvigor/
+**/.hvigor-cache/

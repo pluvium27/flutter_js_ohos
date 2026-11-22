@@ -1,0 +1,13 @@
+// KiriMemo ohos/entry/src/main/module.json5 必改项（否则平板按手机兼容模式显示窄窗）
+{
+  "module": {
+    "deviceTypes": ["phone", "tablet", "2in1"],
+    "abilities": [
+      {
+        "name": "EntryAbility",
+        // 允许全屏/分屏/悬浮窗
+        "supportWindowMode": ["fullscreen", "split", "floating"]
+      }
+    ]
+  }
+}

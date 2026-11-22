@@ -1,0 +1,5 @@
+# OHOS 构建专用覆盖（示例）。复制到 OHOS 构建检出的 KiriMemo/pubspec_overrides.yaml，
+# 不要提交到主分支；非 OHOS 平台的构建保持使用 pub.dev 的 flutter_js 0.8.7。
+dependency_overrides:
+  flutter_js:
+    path: ../flutter_js_ohos

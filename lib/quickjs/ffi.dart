@@ -113,6 +113,52 @@ abstract base class JSRuntime extends Opaque {}
 
 abstract base class JSPropertyEnum extends Opaque {}
 
+
+
+/// OHOS: the bundled libquickjs_c_bridge.so lives in the HAP native libs
+/// directory, which is not part of the default dlopen search path. Resolve it
+/// via /proc/self/maps (sibling of libflutter.so) with fallbacks. The bridge
+/// links libc++_shared.so, so preload that first.
+DynamicLibrary _openOhosQuickJs() {
+  final List<String> candidates = <String>[];
+  final String? envPath = Platform.environment['LIBQUICKJSC_PATH'];
+  if (envPath != null && envPath.isNotEmpty) {
+    candidates.add(envPath);
+  }
+  candidates.add('libquickjs_c_bridge.so');
+  try {
+    final RegExp flutterLib = RegExp(r'(/\S*?)/libflutter\.so');
+    for (final String line in File('/proc/self/maps').readAsLinesSync()) {
+      final Match? match = flutterLib.firstMatch(line);
+      if (match != null) {
+        final String dir = match.group(1)!;
+        try {
+          DynamicLibrary.open(dir + '/libc++_shared.so');
+        } catch (_) {
+          // libc++_shared.so may already be loaded by the engine.
+        }
+        candidates.add(dir + '/libquickjs_c_bridge.so');
+        break;
+      }
+    }
+  } catch (_) {
+    // /proc/self/maps is best-effort; fall through to the other candidates.
+  }
+  candidates.add('/data/storage/el1/bundle/libs/arm64/libquickjs_c_bridge.so');
+  Object? lastError;
+  for (final String path in candidates) {
+    try {
+      final DynamicLibrary lib = DynamicLibrary.open(path);
+      print('[flutter_js] OHOS loaded QuickJS bridge from: ' + path);
+      return lib;
+    } catch (e) {
+      lastError = e;
+    }
+  }
+  print('[flutter_js] OHOS failed to load QuickJS bridge: ' + lastError.toString());
+  throw StateError('OHOS QuickJS bridge load failed: ' + lastError.toString());
+}
+
 final DynamicLibrary _qjsLib = Platform.environment['FLUTTER_TEST'] == 'true'
     ? (Platform.isWindows
         ? DynamicLibrary.open('quickjs_c_bridge.dll')
@@ -128,7 +174,9 @@ final DynamicLibrary _qjsLib = Platform.environment['FLUTTER_TEST'] == 'true'
                 'libquickjs_c_bridge_plugin.so')
             : (Platform.isAndroid
                 ? DynamicLibrary.open('libfastdev_quickjs_runtime.so')
-                : DynamicLibrary.process())));
+                : (Platform.operatingSystem == 'ohos'
+                    ? _openOhosQuickJs()
+                    : DynamicLibrary.process()))));
 
 /// DLLEXPORT JSValue *jsThrow(JSContext *ctx, JSValue *obj)
 final Pointer<JSValue> Function(
@@ -226,17 +274,22 @@ final void Function(
     .asFunction();
 
 /// DLLEXPORT void jsSetMemoryLimit(JSRuntime *rt, size_t limit);
+///
+/// The community OHOS bridge build does not export this symbol; fall back to a
+/// no-op so the rest of the QuickJS engine still works on OHOS.
 final void Function(
   Pointer<JSRuntime>,
   int,
-) jsSetMemoryLimit = _qjsLib
-    .lookup<
-        NativeFunction<
-            Void Function(
-              Pointer<JSRuntime>,
-              IntPtr,
-            )>>('jsSetMemoryLimit')
-    .asFunction();
+) jsSetMemoryLimit = _qjsLib.providesSymbol('jsSetMemoryLimit')
+    ? _qjsLib
+        .lookup<
+            NativeFunction<
+                Void Function(
+                  Pointer<JSRuntime>,
+                  IntPtr,
+                )>>('jsSetMemoryLimit')
+        .asFunction()
+    : (Pointer<JSRuntime> runtime, int limit) {};
 
 /// void jsFreeRuntime(JSRuntime *rt)
 final void Function(

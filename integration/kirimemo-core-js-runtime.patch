@@ -1,0 +1,12 @@
+--- a/lib/core/core_js_runtime.dart	2026-11-22 01:47:02.334896229 +0800
++++ b/lib/core/core_js_runtime.dart	2026-11-22 01:47:02.358288663 +0800
+@@ -23,6 +23,9 @@
+ CoreJsEngine selectCoreJsEngine(TargetPlatform platform) {
+   switch (platform) {
+     case TargetPlatform.android:
++    // OHOS：flutter_js OHOS fork 自带 QuickJS 原生桥（libquickjs_c_bridge.so），
++    // 走与 Android 相同的 IsolateQjs 路径。
++    case TargetPlatform.ohos:
+     case TargetPlatform.linux:
+     case TargetPlatform.windows:
+     case TargetPlatform.fuchsia:

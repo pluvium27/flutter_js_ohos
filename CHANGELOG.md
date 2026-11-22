@@ -1,3 +1,27 @@
+## 0.8.7-ohos.1
+
+- Add OpenHarmony/HarmonyOS support: ohos platform in pubspec.yaml,
+  HAR plugin shell under ohos/, and bundled arm64 libquickjs_c_bridge.so
+  (plus its libc++_shared.so dependency).
+- Load the bundled bridge on OHOS: resolve the HAP native libs directory via
+  /proc/self/maps (sibling of libflutter.so), preload libc++_shared.so,
+  and fall back to LIBQUICKJSC_PATH / plain soname.
+- jsSetMemoryLimit is now optional: if the bridge build does not export the
+  symbol, fall back to a no-op instead of failing at library initialization.
+- getJavascriptRuntime() returns QuickJsRuntime2 on OHOS as well.
+- Validated on HarmonyOS 7 (API 26) with a KiriMemo build: the bundled bridge
+  runs the 307 KB kernel script and all core calls (inspectRepo/overview/plan/
+  createSession) succeed. Note: recursive templates require the bridge stack
+  size to be raised (KiriMemo uses IsolateQjs(stackSize: 1024 * 1024)).
+
+# 0.8.7-ohos.1
+
+- Add OpenHarmony/HarmonyOS support: `ohos` platform in pubspec, HAR plugin shell (`ohos/`) and bundled arm64 `libquickjs_c_bridge.so`.
+- `Platform.operatingSystem == 'ohos'` loads the bundled QuickJS bridge (env override `LIBQUICKJSC_PATH`).
+- `jsSetMemoryLimit` falls back to a no-op when the OHOS bridge does not export it.
+- `getJavascriptRuntime()` returns a QuickJS runtime on OHOS.
+- Validated on device (HarmonyOS 7 / API 26) via a native harness calling the same C API as Dart FFI; kernel calls all succeed. Requires `jsSetMaxStackSize` (>=1 MiB) for recursive Lispite templates.
+
 # 0.8.7
 Fix performance issue in toUTF8 method
 

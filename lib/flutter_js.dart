@@ -41,6 +41,9 @@ JavascriptRuntime getJavascriptRuntime({
     // runtime = FlutterJsLinuxWin()..init();
     //runtime = JavascriptCoreRuntime(); //('f1.js');
     runtime = QuickJsRuntime2();
+  } else if (Platform.operatingSystem == 'ohos') {
+    // OHOS: QuickJS through the bundled libquickjs_c_bridge.so (see ohos/).
+    runtime = QuickJsRuntime2();
   } else {
     runtime = JavascriptCoreRuntime();
   }

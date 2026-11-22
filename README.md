@@ -1,3 +1,8 @@
+> **HarmonyOS / OpenHarmony fork.** This repository tracks upstream
+> [flutter_js](https://github.com/abner/flutter_js) 0.8.7 and adds an "ohos"
+> platform (HAR plugin shell + bundled arm64 QuickJS bridge).
+> See [README.OHOS.md](README.OHOS.md) for details, usage, and validation.
+
 # Flutter JS plugin
 
 A Javascript engine to use with flutter. Now it is using QuickJS on Android   through Dart ffi and JavascriptCore on IOS also through dart-ffi. The Javascript runtimes runs synchronously through the dart ffi. So now you can run javascript code as a native citzen inside yours Flutter ~~Mobile~~ Apps (Android, IOS, Windows, Linux and MacOS are all supported).
