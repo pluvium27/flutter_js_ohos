@@ -1,3 +1,16 @@
+## 0.8.7-ohos.2
+
+- Add a JSVM (HarmonyOS ArkCompiler) backend:
+  - lib/jsvm/ffi.dart: Dart FFI bridge to libjsvm_bridge.so
+  - lib/jsvm/jsvm_runtime.dart: JsvmRuntime implementation
+  - ohos/jsvm_bridge/: C shim source + build script
+  - ohos/libs/arm64-v8a/libjsvm_bridge.so: prebuilt arm64 binary
+- getJavascriptRuntime() now defaults to JsvmRuntime on OHOS; pass
+  extraArgs: {'engine': 'quickjs'} to use the QuickJS bridge instead.
+- JSVM backend supports synchronous evaluate() only; channel callbacks,
+  timers and promises are not available. Fetch/promise extensions are
+  skipped for this backend.
+
 ## 0.8.7-ohos.1
 
 - Add OpenHarmony/HarmonyOS support: ohos platform in pubspec.yaml,

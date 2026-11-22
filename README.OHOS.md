@@ -8,9 +8,10 @@ Flutter for OpenHarmony / HarmonyOS.
 
 | Area | Change |
 |---|---|
-| pubspec.yaml | version 0.8.7-ohos.1; adds ohos: pluginClass: FlutterJsPlugin |
-| lib/flutter_js.dart | getJavascriptRuntime() selects QuickJsRuntime2 on OHOS |
-| lib/quickjs/ffi.dart | OHOS bridge loading (see below); optional jsSetMemoryLimit |
+| pubspec.yaml | version 0.8.7-ohos.2; adds ohos: pluginClass: FlutterJsPlugin |
+| lib/flutter_js.dart | getJavascriptRuntime() selects JsvmRuntime on OHOS (QuickJS bridge via extraArgs) |
+| lib/quickjs/ffi.dart | QuickJS bridge loading; optional jsSetMemoryLimit |
+| lib/jsvm/ | JSVM (ArkCompiler) FFI backend and runtime |
 | ohos/ | HAR plugin shell (FlutterJsPlugin.ets, module.json5, oh-package.json5, build-profile.json5, hvigorfile.ts) and arm64 native libraries |
 
 ### Bridge loading on OHOS
@@ -69,6 +70,33 @@ See integration/ for a working KiriMemo setup:
 - integration/kirimemo-core-js-runtime.patch - selects the OHOS engine in the
   application runtime factory.
 
+## JSVM backend (default on OHOS)
+
+HarmonyOS exposes the ArkCompiler JSVM engine to native code. The package
+ships a thin C shim (ohos/libs/arm64-v8a/libjsvm_bridge.so, source in
+ohos/jsvm_bridge/) and a Dart runtime (lib/jsvm/) on top of it. JSVM is the
+default engine on OHOS; it is faster than the QuickJS bridge and does not
+depend on a community prebuilt QuickJS binary.
+
+The backend supports synchronous evaluation only. It does not provide Dart
+channel callbacks, setTimeout, promises or fetch; those extensions are
+disabled for JsvmRuntime. This is sufficient for kernels that use a
+Dart -> JS -> JSON string protocol.
+
+Build the shim for arm64 with the OHOS NDK:
+
+~~~bash
+DEVECO_CLT_HOME=/path/to/command-line-tools   ohos/jsvm_bridge/build_jsvm_bridge.sh
+~~~
+
+To keep using the QuickJS bridge on OHOS:
+
+~~~dart
+final runtime = getJavascriptRuntime(
+  extraArgs: const {'engine': 'quickjs'},
+);
+~~~
+
 ## Validation
 
 Validated on a HarmonyOS 7.0.0.111 (API 26) tablet, arm64, with a KiriMemo HAP
@@ -82,7 +110,7 @@ built for OHOS and a 307 KB heurams-core.js kernel (protocolVersion 2):
 | plan | OK, ~17 ms |
 | createSession | OK, ~274 ms |
 
-The bridge runs the whole kernel; Chinese IR and all core calls work. For
+With JSVM, the same kernel initializes in ~37 ms and all core calls work; the QuickJS bridge also runs the whole kernel. For
 comparison, the system ArkJS/JSVM engine on the same device is roughly 3-10x
 faster (it JITs), so applications that need maximum performance on HarmonyOS
 may prefer a JSVM backend. This package keeps a single cross-platform engine
